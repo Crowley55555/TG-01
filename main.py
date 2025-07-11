@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 from config import TOKEN
 
 import random
@@ -10,10 +10,104 @@ from config import WEATHER_API_KEY
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+from gtts import gTTS
+import os
+import re
+from deep_translator import GoogleTranslator
+
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+@dp.message(Command('doc'))
+async def doc(message: Message):
+    doc = FSInputFile('file.pdf')
+    await bot.send_document(message.chat.id, doc)
 
+@dp.message(Command('video'))
+async def video(message: Message):
+    await bot.send_chat_action(message.chat.id, action='upload_video')
+    video = FSInputFile('video.mp4')
+    await bot.send_video(message.chat.id, video)
+
+@dp.message(Command('voice'))
+async def voice(message: Message):
+    await bot.send_chat_action(message.chat.id, action='upload_voice')
+    voice = FSInputFile('voice.ogg')
+    await message.answer_voice(voice)
+
+
+@dp.message(Command('audio'))
+async def audio(message: Message):
+    await bot.send_chat_action(message.chat.id, action='upload_audio')
+    audio = FSInputFile('Dirty Magic.m4a')
+    await bot.send_audio(message.chat.id, audio)
+
+@dp.message(Command('training'))
+async def training(message: Message):
+
+    traning_list = [
+        {
+            "title": "💪 <b>Силовая тренировка (5на5)</b>",
+            "description": (
+                "<i>Цель:</i> Увеличение силы в базовых упражнениях\n\n"
+                "🏋️ <b>Приседания со штангой</b> – 5 подходов по 5 раз\n"
+                "🛌 <b>Жим штанги лёжа</b> – 5 подходов по 5 раз\n"
+                "⬆️ <b>Становая тяга</b> – 3 подхода по 5 раз\n"
+                "🙌 <b>Подтягивания</b> – 3 подхода по максимуму\n"
+                "⏱ <b>Планка</b> – 3 подхода по 60 секунд"
+            )
+        },
+        {
+            "title": "🔥 <b>Круговая тренировка (3 круга)</b>",
+            "description": (
+                "<i>Цель:</i> Выносливость и жиросжигание\n\n"
+                "🐸 <b>Бёрпи</b> – 15 раз\n"
+                "🏃 <b>Прыжки на скакалке</b> – 1 минута\n"
+                "✊ <b>Отжимания</b> – 20 раз\n"
+                "🦵 <b>Приседания с прыжком</b> – 20 раз\n"
+                "🧗 <b>Скалолаз</b> – 30 секунд\n"
+                "⏱ <b>Планка</b> – 45 секунд"
+            )
+        },
+        {
+            "title": "📅 <b>Сплит-тренировка (3 дня)</b>",
+            "description": (
+                "<i>День 1 (Грудь + Трицепс):</i>\n"
+                "🛌 <b>Жим штанги лёжа</b> – 4 подхода по 8 раз\n"
+                "✈️ <b>Разводка гантелей</b> – 3 подхода по 12 раз\n"
+                "👇 <b>Отжимания на брусьях</b> – 3 подхода по максимуму\n"
+                "💪 <b>Французский жим</b> – 4 подхода по 10 раз\n\n"
+
+                "<i>День 2 (Спина + Бицепс):</i>\n"
+                "🙌 <b>Подтягивания</b> – 4 подхода по максимуму\n"
+                "🏋️ <b>Тяга штанги в наклоне</b> – 4 подхода по 8 раз\n"
+                "👜 <b>Тяга гантели одной рукой</b> – 3 подхода по 10 раз\n"
+                "💪 <b>Подъём штанги на бицепс</b> – 3 подхода по 12 раз\n\n"
+
+                "<i>День 3 (Ноги + Плечи):</i>\n"
+                "🦵 <b>Приседания со штангой</b> – 4 подхода по 8 раз\n"
+                "⬆️ <b>Румынская тяга</b> – 3 подхода по 10 раз\n"
+                "🪑 <b>Жим гантелей сидя</b> – 4 подхода по 10 раз\n"
+                "✈️ <b>Махи в стороны</b> – 3 подхода по 15 раз"
+            )
+        }
+    ]
+    rand_tr = random.choice(traning_list)
+    await message.answer(rand_tr['title'], parse_mode='HTML')
+    await message.answer(rand_tr['description'], parse_mode='HTML')
+
+    await bot.send_chat_action(message.chat.id, action='upload_audio')
+
+    # Очищаем текст от HTML-тегов и эмодзи
+    clean_text = re.sub('<[^<]+?>', '', rand_tr['description'])  # Удаляем HTML-теги
+    clean_text = re.sub(r'[^\w\s.,!?-]', '', clean_text)  # Удаляем эмодзи и спецсимволы
+
+    tts = gTTS(text=clean_text, lang='ru')
+    tts.save(f'tmp/{message.from_user.id}.ogg')
+    audio = FSInputFile(f'tmp/{message.from_user.id}.ogg')
+    await bot.send_voice(message.chat.id, audio)
+    os.remove(f'tmp/{message.from_user.id}.ogg')
 
 @dp.message(F.text == 'Что такое ИИ')
 async def aitext(message: Message):
@@ -24,6 +118,7 @@ async def reactphoto(message: Message):
     list = ['норм фотка', 'непонятно что это', 'пришли еще такую фотку']
     rand_answer = random.choice(list)
     await message.answer(rand_answer)
+    await bot.download(message.photo[-1], destination=f'tmp/{message.photo[-1].file_id}.jpg')
 
 @dp.message(Command('photo'))
 async def photo(message: Message):
@@ -77,7 +172,24 @@ async def process_city(message: Message, state: FSMContext):
 
 @dp.message(CommandStart())
 async def start(message: Message):
-    await message.answer('Привет, я бот!')
+    await message.answer(f'Привет {message.from_user.full_name}, я бот!')
+
+@dp.message(F.text.lower() == 'тест')
+async def test(message: Message):
+    await message.answer('Запускаем тестирование')
+
+# @dp.message()
+# async def echo(message: Message):
+#     await message.send_copy(chat_id=message.from_user.id)
+
+@dp.message(F.text & ~F.text.startswith('/'))
+async def translate_to_english(message: Message):
+    text = message.text
+    try:
+        translated = GoogleTranslator(source='auto', target='en').translate(text)
+        await message.answer(translated)
+    except Exception as e:
+        await message.answer(f"Ошибка при переводе: {e}")
 
 async def main():
     await dp.start_polling(bot)
