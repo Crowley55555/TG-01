@@ -12,6 +12,8 @@ import aiohttp
 import logging
 
 
+
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 

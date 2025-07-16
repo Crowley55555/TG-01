@@ -4,7 +4,6 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, FSInputFile
 from config import TOKEN
 
-
 import random
 import aiohttp
 from config import WEATHER_API_KEY
