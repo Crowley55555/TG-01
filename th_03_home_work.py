@@ -1,16 +1,21 @@
 import asyncio
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart
 from aiogram.types import Message, FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.storage.memory import MemoryStorage
-from config import TOKEN
+from dotenv import load_dotenv
+import os
+
 import sqlite3
-import aiohttp
+
 import logging
 
+load_dotenv()
+TOKEN = os.getenv('TOKEN')
+
 bot = Bot(token=TOKEN)
+
 dp = Dispatcher()
 
 logging.basicConfig(level=logging.INFO)
@@ -52,8 +57,8 @@ async def process_age(message: Message, state: FSMContext): # Обработка
     await state.set_state(Form.grade)  # Установка состояния - ожидание города
 
 @dp.message(Form.grade)
-async def process_grade(message: Message, state: FSMContext): # Обработка города
-    await state.update_data(grade=message.text)  # Сохранение города в базе данных
+async def process_grade(message: Message, state: FSMContext): # Обработка класса
+    await state.update_data(grade=message.text)  # Сохранение класса в базе данных
     user_data = await state.get_data()  # Получение сохраненных данных
 
     conn = sqlite3.connect('school_data.db')
